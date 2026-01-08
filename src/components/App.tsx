@@ -412,7 +412,7 @@ const App: React.FC = () => {
 }> ({ messages: {}, colors: [], obstacles: [], distances: [], variables: {} });
 
 // New state to hold the Blockly color pick callback
-const [blocklyColorPickCallback, setBlocklyColorPickCallback] = useState < ((newColor: string) => void) | null > (null);
+const blocklyColorPickCallbackRef = useRef<((color: string) => void) | null>(null);
 
 const showToast = useCallback((message: string, type: 'success' | 'info' | 'error' = 'success') => { setToast({ message, type }); setTimeout(() => setToast(null), 4000); }, []);
 
@@ -846,9 +846,9 @@ const handlePickerHover = useCallback((hexColor: string) => {
 
 // Handler for when ColorPickerTool selects a color
 const handlePickerSelect = useCallback((hexColor: string) => {
-    if (blocklyColorPickCallback) {
-        blocklyColorPickCallback(hexColor);
-    }
+   if (blocklyColorPickCallbackRef.current) {
+    blocklyColorPickCallbackRef.current(hexColor);
+}
     setIsColorPickerActive(false);
     setPickerHoverColor(null);
     setBlocklyColorPickCallback(null);
@@ -857,7 +857,7 @@ const handlePickerSelect = useCallback((hexColor: string) => {
 
 const showBlocklyColorPicker = useCallback((onPick: (newColor: string) => void) => {
     setIsColorPickerActive(true); // Activate the color picker tool visually
-    setBlocklyColorPickCallback(() => onPick); // Store the callback from Blockly
+   blocklyColorPickCallbackRef.current = onPick; // Store the callback from Blockly
 }, []);
 
 
