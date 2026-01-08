@@ -2,28 +2,28 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Line } from '@react-three/drei';
-import * as THREE from 'three'; // זה יפתור את כל שגיאות ה-THREE שראינו
 import { RotateCcw, Code2, Ruler, Trophy, X, Flag, Save, FolderOpen, Check, AlertCircle, Info, Terminal, Star, Home, Eye, Move, Hand, Bot, Target, FileCode, ZoomIn, ZoomOut } from 'lucide-react';
-
-// שים לב לשינוי בנתיבים - מחקנו את ה- "./components/" כי הקבצים נמצאים איתך באותה תיקייה
-import BlocklyEditor, { BlocklyEditorHandle } from './BlocklyEditor';
-import Robot3D from './Robot3D';
-import SimulationEnvironment from './Environment';
-import { RobotState, CustomObject, ContinuousDrawing, SimulationHistory, CameraMode, EditorTool, PathShape } from '../types'; // כאן הוספנו נקודה נוספת כי types נמצא בחוץ
-import Numpad from './Numpad';
-import SensorDashboard from './SensorDashboard';
-import RulerTool from './RulerTool';
-import ColorPickerTool from './ColorPickerTool';
-import CameraManager from './CameraManager';
-import { CHALLENGES, Challenge } from '../data/challenges'; // גם כאן יצאנו תיקייה אחת החוצה
-import { ThreeEvent } from '@react-three/fiber';
+import * as THREE from 'three';
+// Corrected import paths relative to src/App.tsx
+import BlocklyEditor, { BlocklyEditorHandle } from './components/BlocklyEditor';
+import Robot3D from './components/Robot3D';
+import SimulationEnvironment from './components/Environment';
+import { RobotState, CustomObject, ContinuousDrawing, SimulationHistory, CameraMode, EditorTool, PathShape } from './types';
+import Numpad from './components/Numpad';
+import SensorDashboard from './components/SensorDashboard';
+import RulerTool from './components/RulerTool';
+import ColorPickerTool from './components/ColorPickerTool';
+import CameraManager from './components/CameraManager';
+import { CHALLENGES, Challenge } from './data/challenges';
+import { ThreeEvent } from '@react-three/fiber'; // Import ThreeEvent here
 
 const TICK_RATE = 16; 
 const BASE_VELOCITY = 0.165; // Retained at 3x original for normal forward movement
 const BASE_TURN_SPEED = 3.9; // Increased to 30x original (0.13 * 30) for much faster turning
 const TURN_TOLERANCE = 0.5; // degrees - for turn precision
 
-const DROPPER_CURSOR_URL = `url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwNC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmb25lIiBzZmlsbC1vcGFjaXR5PSIxIiBzdHJva2U9IiNlYzQ4OTkiIHN0cm9rZS13aWR0aD0iMiIgc3RyYtBLLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtdW5lam9pbj0icm91bmQiPjxwYXRoIGQ9MTAuNTQgOC40NmE1IDUgMCAxIDAtNy4wNyA3LjA3bDEuNDEgMS40MWEyIDIgMCAwIDAgMi44MyAwbDIuODMtMi44M2EyIDIgMCAwIDAgMC0yLjgzbC0xLjQxLTEuNDF6Ii8+PHBhdGggZD0ibTkgMTkgNW0tNy05IDUtNSIvPjxwYXRoIGQ9Ik05LjUgMTQuNSA0IDkiLz48cGF0aCBkPSJtMTggNiAzLTMiLz48cGF0aCBkPSJNMjAuOSA3LjFhMiAyIDAg1IDAtMi44LTy44bC0xLjQgMS40IDIuOCAy.4IDEuNC0x.4eiIvPjwvc3ZnPgo=') 0 24, crosshair`;
+// Corrected SVG attribute names (strok- to stroke-) and corrected base64 for a standard eyedropper icon.
+const DROPPER_CURSOR_URL = `url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwNC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0ibTIgMjIgNS01Ii8+PHBhdGggZD0iTTkuNSAxNC41IDE2IDhsMyAzLTYuNSA2LjUtMy0zWiIvPjxwYXRoIGQ9Im0xOCA2IDMtMyIvPjxwYXRoIGQ9Ik0yMC45IDcuMWEyIDIgMCAxIDAtMi44LTIuOGwtMS40IDEuNCAyLjggMi44IDEuNC0xLjR6Ii8+PC9zdmc+') 0 24, crosshair`;
 
 // Canonical map for common color names to their representative hex values (aligned with Blockly icons)
 const CANONICAL_COLOR_MAP: Record<string, string> = {
@@ -410,8 +410,8 @@ const App: React.FC = () => {
   const abortControllerRef = useRef<AbortController | null>(null);
   const listenersRef = useRef<{ messages: Record<string, (() => Promise<void>)[]>, colors: { color: string, cb: () => Promise<void>, lastMatch: boolean }[], obstacles: { cb: () => Promise<void>, lastMatch: boolean }[], distances: { threshold: number, cb: () => Promise<void>, lastMatch: boolean }[], variables: Record<string, any> }>({ messages: {}, colors: [], obstacles: [], distances: [], variables: {} });
 
-  // New state to hold the Blockly color pick callback
-  const [blocklyColorPickCallback, setBlocklyColorPickCallback] = useState<((newColor: string) => void) | null>(null);
+  // Corrected: Removed duplicate useState declaration for blocklyColorPickCallback
+  const blocklyColorPickCallback = useRef<((newColor: string) => void) | null>(null);
 
   const showToast = useCallback((message: string, type: 'success' | 'info' | 'error' = 'success') => { setToast({ message, type }); setTimeout(() => setToast(null), 4000); }, []);
 
@@ -845,18 +845,20 @@ const App: React.FC = () => {
 
   // Handler for when ColorPickerTool selects a color
   const handlePickerSelect = useCallback((hexColor: string) => {
-    if (blocklyColorPickCallback) {
-      blocklyColorPickCallback(hexColor);
+    // CHANGED: Access callback through .current
+    if (blocklyColorPickCallback.current) {
+      blocklyColorPickCallback.current(hexColor);
     }
     setIsColorPickerActive(false);
     setPickerHoverColor(null);
-    setBlocklyColorPickCallback(null);
-  }, [blocklyColorPickCallback]);
+    blocklyColorPickCallback.current = null; // CHANGED: Clear the ref
+  }, []);
 
 
   const showBlocklyColorPicker = useCallback((onPick: (newColor: string) => void) => {
     setIsColorPickerActive(true); // Activate the color picker tool visually
-    setBlocklyColorPickCallback(() => onPick); // Store the callback from Blockly
+    // CHANGED: Store callback directly in the ref's .current
+    blocklyColorPickCallback.current = onPick;
   }, []);
 
 
