@@ -2,18 +2,21 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Line } from '@react-three/drei';
+import * as THREE from 'three'; // זה יפתור את כל שגיאות ה-THREE שראינו
 import { RotateCcw, Code2, Ruler, Trophy, X, Flag, Save, FolderOpen, Check, AlertCircle, Info, Terminal, Star, Home, Eye, Move, Hand, Bot, Target, FileCode, ZoomIn, ZoomOut } from 'lucide-react';
-import BlocklyEditor, { BlocklyEditorHandle } from './components/BlocklyEditor';
-import Robot3D from './components/Robot3D';
-import SimulationEnvironment from './components/Environment';
-import { RobotState, CustomObject, ContinuousDrawing, SimulationHistory, CameraMode, EditorTool, PathShape } from './types';
-import Numpad from './components/Numpad';
-import SensorDashboard from './components/SensorDashboard';
-import RulerTool from './components/RulerTool';
-import ColorPickerTool from './components/ColorPickerTool';
-import CameraManager from './components/CameraManager'; // ייבוא CameraManager
-import { CHALLENGES, Challenge } from './data/challenges';
-import { ThreeEvent } from '@react-three/fiber'; // Import ThreeEvent here
+
+// שים לב לשינוי בנתיבים - מחקנו את ה- "./components/" כי הקבצים נמצאים איתך באותה תיקייה
+import BlocklyEditor, { BlocklyEditorHandle } from './BlocklyEditor';
+import Robot3D from './Robot3D';
+import SimulationEnvironment from './Environment';
+import { RobotState, CustomObject, ContinuousDrawing, SimulationHistory, CameraMode, EditorTool, PathShape } from '../types'; // כאן הוספנו נקודה נוספת כי types נמצא בחוץ
+import Numpad from './Numpad';
+import SensorDashboard from './SensorDashboard';
+import RulerTool from './RulerTool';
+import ColorPickerTool from './ColorPickerTool';
+import CameraManager from './CameraManager';
+import { CHALLENGES, Challenge } from '../data/challenges'; // גם כאן יצאנו תיקייה אחת החוצה
+import { ThreeEvent } from '@react-three/fiber';
 
 const TICK_RATE = 16; 
 const BASE_VELOCITY = 0.165; // Retained at 3x original for normal forward movement
