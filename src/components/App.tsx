@@ -5,7 +5,7 @@ import { OrbitControls, Line } from '@react-three/drei';
 import { RotateCcw, Code2, Ruler, Trophy, X, Flag, Save, FolderOpen, Check, AlertCircle, Info, Terminal, Star, Home, Eye, Move, Hand, Bot, Target, FileCode, ZoomIn, ZoomOut } from 'lucide-react';
 import * as THREE from 'three';
 // Corrected import paths relative to src/App.tsx
-import BlocklyEditor, { BlocklyEditorHandle } from './components/BlocklyEditor';
+import BlocklyEditor from './BlocklyEditor';
 import Robot3D from './components/Robot3D';
 import SimulationEnvironment from './components/Environment';
 import { RobotState, CustomObject, ContinuousDrawing, SimulationHistory, CameraMode, EditorTool, PathShape } from './types';
