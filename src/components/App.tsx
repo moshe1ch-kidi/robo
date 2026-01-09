@@ -1,4 +1,4 @@
-  import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+ import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Line } from '@react-three/drei';
 import * as THREE from 'three';
@@ -764,23 +764,60 @@ const App: React.FC = () => {
         setNumpadConfig({ isOpen: true, value: parseFloat(String(initialValue)), onConfirm });
     }, []);
 
-    const handlePickerHover = useCallback((hexColor: string) => {
-        setPickerHoverColor(hexColor);
+    const handlePickerHover = useCallback((hexColor: string | null) => {
+        if (hexColor && typeof hexColor === 'string') {
+            setPickerHoverColor(hexColor);
+        } else {
+            setPickerHoverColor(null);
+        }
     }, []);
 
     const handlePickerSelect = useCallback((hexColor: string) => {
+        // 1. בדיקה שהצבע תקין
+        if (!hexColor || typeof hexColor !== 'string') {
+            console.warn("Invalid color value received:", hexColor);
+            setIsColorPickerActive(false);
+            return;
+        }
+
+        // 2. הפעלת ה-Callback שנשמר בתוך ה-Ref
         if (blocklyColorPickCallbackRef.current) {
-            blocklyColorPickCallbackRef.current(hexColor);
+            try {
+                blocklyColorPickCallbackRef.current(hexColor);
+            } catch (err) {
+                console.error("Blockly failed to accept color:", err);
+            }
+            // 3. ניקוי ה-Ref כדי למנוע קריאות כפולות
             blocklyColorPickCallbackRef.current = null;
         }
+
+        // 4. סגירת הממשק
         setIsColorPickerActive(false);
         setPickerHoverColor(null);
     }, []);
 
     const showBlocklyColorPicker = useCallback((onPick: (newColor: string) => void) => {
+        if (typeof onPick !== 'function') {
+            console.error("Invalid color picker callback:", onPick);
+            return; // הגנה מפני קריסה
+        }
+        
         setIsColorPickerActive(true);
+        // שומרים את הפונקציה ב-Ref כדי שלא תשתנה ברינדור
         blocklyColorPickCallbackRef.current = onPick;
     }, []);
+
+    // Global error handler to prevent white screens
+    useEffect(() => {
+        const handleError = (event: ErrorEvent) => {
+            console.error("Global error caught:", event.error);
+            showToast("An error occurred. Please refresh the page.", "error");
+            event.preventDefault(); // Prevent default error handling
+        };
+
+        window.addEventListener('error', handleError);
+        return () => window.removeEventListener('error', handleError);
+    }, [showToast]);
 
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-slate-50" dir="ltr">
@@ -874,14 +911,23 @@ const App: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex-1 relative">
-                        <BlocklyEditor
-                            ref={blocklyEditorRef}
-                            onCodeChange={useCallback((code, count) => { setGeneratedCode(code); setStartBlockCount(count); }, [])}
-                            visibleVariables={visibleVariables}
-                            onToggleVariable={useCallback((n) => setVisibleVariables(v => { const next = new Set(v); if (next.has(n)) next.delete(n); else next.add(n); return next; }), [])}
-                            onShowNumpad={showBlocklyNumpad}
-                            onShowColorPicker={showBlocklyColorPicker}
-                        />
+                        {blocklyEditorRef && (
+                            <BlocklyEditor
+                                ref={blocklyEditorRef}
+                                onCodeChange={useCallback((code, count) => { 
+                                    try {
+                                        setGeneratedCode(code); 
+                                        setStartBlockCount(count);
+                                    } catch (err) {
+                                        console.error("Error updating code:", err);
+                                    }
+                                }, [])}
+                                visibleVariables={visibleVariables}
+                                onToggleVariable={useCallback((n) => setVisibleVariables(v => { const next = new Set(v); if (next.has(n)) next.delete(n); else next.add(n); return next; }), [])}
+                                onShowNumpad={showBlocklyNumpad}
+                                onShowColorPicker={showBlocklyColorPicker}
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -977,36 +1023,50 @@ const App: React.FC = () => {
                         onColorClick={() => setIsColorPickerActive(!isColorPickerActive)}
                     />
 
-                    <Canvas shadows camera={{ position: [10, 10, 10], fov: 45 }}>
-                        <SimulationEnvironment
-                            challengeId={activeChallenge?.id}
-                            customObjects={customObjects}
-                            robotState={robotState}
-                            onPointerDown={handlePointerDown}
-                            onPointerMove={handlePointerMove}
-                            onPointerUp={handlePointerUp}
-                        />
-                        {completedDrawings.map((path) => (
-                            <Line key={path.id} points={path.points} color={path.color} lineWidth={4} />
-                        ))}
-                        {activeDrawing && activeDrawing.points.length > 1 && (
-                            <Line key={activeDrawing.id} points={activeDrawing.points} color={activeDrawing.color} lineWidth={4} />
-                        )}
-                        <Robot3D state={robotState} isPlacementMode={editorTool === 'ROBOT_MOVE'} />
-                        <OrbitControls
-                            ref={controlsRef}
-                            makeDefault
-                            {...orbitControlsProps}
-                        />
-                        <CameraManager robotState={robotState} cameraMode={cameraMode} controlsRef={controlsRef} />
-                        {isRulerActive && <RulerTool />}
-                        {isColorPickerActive && (
-                            <ColorPickerTool
-                                onColorHover={handlePickerHover}
-                                onColorSelect={handlePickerSelect}
-                            />
-                        )}
-                    </Canvas>
+                    {(() => {
+                        try {
+                            return (
+                                <Canvas shadows camera={{ position: [10, 10, 10], fov: 45 }}>
+                                    <SimulationEnvironment
+                                        challengeId={activeChallenge?.id}
+                                        customObjects={customObjects}
+                                        robotState={robotState}
+                                        onPointerDown={handlePointerDown}
+                                        onPointerMove={handlePointerMove}
+                                        onPointerUp={handlePointerUp}
+                                    />
+                                    {completedDrawings.map((path) => {
+                                        try {
+                                            return <Line key={path.id} points={path.points} color={path.color} lineWidth={4} />;
+                                        } catch (err) {
+                                            console.error("Error rendering drawing:", err);
+                                            return null;
+                                        }
+                                    })}
+                                    {activeDrawing && activeDrawing.points.length > 1 && (
+                                        <Line key={activeDrawing.id} points={activeDrawing.points} color={activeDrawing.color} lineWidth={4} />
+                                    )}
+                                    <Robot3D state={robotState} isPlacementMode={editorTool === 'ROBOT_MOVE'} />
+                                    <OrbitControls
+                                        ref={controlsRef}
+                                        makeDefault
+                                        {...orbitControlsProps}
+                                    />
+                                    <CameraManager robotState={robotState} cameraMode={cameraMode} controlsRef={controlsRef} />
+                                    {isRulerActive && <RulerTool />}
+                                    {isColorPickerActive && (
+                                        <ColorPickerTool
+                                            onColorHover={handlePickerHover}
+                                            onColorSelect={handlePickerSelect}
+                                        />
+                                    )}
+                                </Canvas>
+                            );
+                        } catch (err) {
+                            console.error("Canvas render error:", err);
+                            return <div className="w-full h-full bg-red-200 flex items-center justify-center text-red-900">Canvas Error: {String(err)}</div>;
+                        }
+                    })()}
                 </div>
             </main>
 
