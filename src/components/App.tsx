@@ -1,18 +1,22 @@
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Canvas, useThree, useFrame } from '@react-three/fiber';
+import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Line } from '@react-three/drei';
-import { RotateCcw, Code2, Ruler, Trophy, X, Flag, Save, FolderOpen, Download, Upload, FileJson, ZoomIn, ZoomOut, Maximize, Home, Eye, Move, Hammer, Trash2, Mountain, Map as MapIcon, Square, Palette, Undo, Trash, Settings2, ChevronRight, ChevronLeft, CornerDownRight, MoveUpRight, GripHorizontal, PlusCircle, Check, AlertCircle, Hand, Copy, ExternalLink, Info, Bot, Terminal, LayoutList, Star, ShieldCheck, Settings, Key, BookOpen, Crown, PlayCircle, Edit3, EyeOff, RefreshCcw, FileUp, Zap, Gauge, Flame, LogOut, PenLine } from 'lucide-react';
-import { Vector3, MOUSE, Color } from 'three';
-import BlocklyEditor from './BlocklyEditor';
+import * as THREE from 'three'; // זה יפתור את כל שגיאות ה-THREE שראינו
+import { RotateCcw, Code2, Ruler, Trophy, X, Flag, Save, FolderOpen, Check, AlertCircle, Info, Terminal, Star, Home, Eye, Move, Hand, Bot, Target, FileCode, ZoomIn, ZoomOut } from 'lucide-react';
+
+// שים לב לשינוי בנתיבים - מחקנו את ה- "./components/" כי הקבצים נמצאים איתך באותה תיקייה
+import BlocklyEditor, { BlocklyEditorHandle } from './BlocklyEditor';
 import Robot3D from './Robot3D';
 import SimulationEnvironment from './Environment';
+import { RobotState, CustomObject, ContinuousDrawing, SimulationHistory, CameraMode, EditorTool, PathShape } from '../types'; // כאן הוספנו נקודה נוספת כי types נמצא בחוץ
 import Numpad from './Numpad';
 import SensorDashboard from './SensorDashboard';
 import RulerTool from './RulerTool';
 import ColorPickerTool from './ColorPickerTool';
-import { ChallengeBuilderUI } from './ChallengeBuilderUI';
-import { CHALLENGES, Challenge, SimulationHistory } from './data/challenges';
+import CameraManager from './CameraManager';
+import { CHALLENGES, Challenge } from '../data/challenges'; // גם כאן יצאנו תיקייה אחת החוצה
+import { ThreeEvent } from '@react-three/fiber';;
 
 const TICK_RATE = 16; 
 const BASE_VELOCITY = 0.055; 
